@@ -55,9 +55,12 @@ AC_DEFINE_UNQUOTED(HAVE_LITTLE_ENDIAN, $little_endian, [Little-endian system])
 AC_DEFINE_UNQUOTED(HAVE_BIG_ENDIAN, $big_endian, [Big-endian system])
 
 PKG_PROG_PKG_CONFIG()
-PKG_CHECK_MODULES(libcrypto, libcrypto,
-    [],
-    AC_MSG_ERROR([libcrypto (from the OpenSSL package) is required]))
+PKG_CHECK_MODULES(libcrypto, [libcrypto >= 3.0.0],
+                  [ac_have_openssl3=1],
+                  [PKG_CHECK_MODULES(libcrypto, libcrypto,
+                   [],
+                   AC_MSG_ERROR([libcrypto (from the OpenSSL package) is required]))])
+AM_CONDITIONAL(HAVE_OPENSSL3, test "$ac_have_openssl3" = "1")
 
 PKG_CHECK_MODULES(uuid, uuid,
     [],
