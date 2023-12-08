@@ -146,12 +146,12 @@ const char obsolete[] = {
 	0x00, 0x65, 0x00, 0x3e, 0x00, 0x3e, 0x00, 0x3e
 };
 
-const char *sha256_str(const uint8_t *hash)
+const char *sha384_str(const uint8_t *hash)
 {
-	static char s[SHA256_DIGEST_LENGTH * 2 + 1];
+	static char s[SHA384_DIGEST_LENGTH * 2 + 1];
 	int i;
 
-	for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
+	for (i = 0; i < SHA384_DIGEST_LENGTH; i++)
 		snprintf(s + i * 2, 3, "%02x", hash[i]);
 
 	return s;
@@ -159,7 +159,7 @@ const char *sha256_str(const uint8_t *hash)
 
 int IDC_set(PKCS7 *p7, PKCS7_SIGNER_INFO *si, struct image *image)
 {
-	uint8_t *buf, *tmp, sha[SHA256_DIGEST_LENGTH];
+	uint8_t *buf, *tmp, sha[SHA384_DIGEST_LENGTH];
 	int idc_nid, peid_nid, len, rc;
 	IDC_PEID *peid;
 	ASN1_STRING *s;
@@ -174,7 +174,15 @@ int IDC_set(PKCS7 *p7, PKCS7_SIGNER_INFO *si, struct image *image)
 			"spcPEImageData",
 			"PE Image Data");
 
-	image_hash_sha256(image, sha);
+	image_hash_sha384(image, sha);
+
+	printf("sha384 digest: ");
+	for (int i = 0; i < 48; ++i)
+		printf("%02x", sha[i]);
+	puts("\n");
+
+	/* We don't need to run a complete process */
+	exit(0);
 
 	idc = IDC_new();
 	peid = IDC_PEID_new();
@@ -192,7 +200,7 @@ int IDC_set(PKCS7 *p7, PKCS7_SIGNER_INFO *si, struct image *image)
 	type_set_sequence(image, idc->data->value, peid, ASN1_ITEM_rptr(IDC_PEID));
 
         idc->digest->alg->parameter = ASN1_TYPE_new();
-        idc->digest->alg->algorithm = OBJ_nid2obj(NID_sha256);
+        idc->digest->alg->algorithm = OBJ_nid2obj(NID_sha384);
         idc->digest->alg->parameter->type = V_ASN1_NULL;
         ASN1_OCTET_STRING_set(idc->digest->digest, sha, sizeof(sha));
 
@@ -274,14 +282,14 @@ struct idc *IDC_get(PKCS7 *p7, BIO *bio)
 
 int IDC_check_hash(struct idc *idc, struct image *image)
 {
-	unsigned char sha[SHA256_DIGEST_LENGTH];
+	unsigned char sha[SHA384_DIGEST_LENGTH];
 	const unsigned char *buf;
 	ASN1_STRING *str;
 
-	image_hash_sha256(image, sha);
+	image_hash_sha384(image, sha);
 
 	/* check hash algorithm sanity */
-	if (OBJ_cmp(idc->digest->alg->algorithm, OBJ_nid2obj(NID_sha256))) {
+	if (OBJ_cmp(idc->digest->alg->algorithm, OBJ_nid2obj(NID_sha384))) {
 		fprintf(stderr, "Invalid algorithm type\n");
 		return -1;
 	}
@@ -300,8 +308,8 @@ int IDC_check_hash(struct idc *idc, struct image *image)
 #endif
 	if (memcmp(buf, sha, sizeof(sha))) {
 		fprintf(stderr, "Hash doesn't match image\n");
-		fprintf(stderr, " got:       %s\n", sha256_str(buf));
-		fprintf(stderr, " expecting: %s\n", sha256_str(sha));
+		fprintf(stderr, " got:       %s\n", sha384_str(buf));
+		fprintf(stderr, " expecting: %s\n", sha384_str(sha));
 		return -1;
 	}
 

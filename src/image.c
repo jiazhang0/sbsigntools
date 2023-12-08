@@ -508,35 +508,35 @@ err:
 	return NULL;
 }
 
-int image_hash_sha256(struct image *image, uint8_t digest[])
+int image_hash_sha384(struct image *image, uint8_t digest[])
 {
 	struct region *region;
-	SHA256_CTX ctx;
+	SHA512_CTX ctx;
 	int rc, i, n;
 
-	rc = SHA256_Init(&ctx);
-	if (!rc)
+	rc = SHA384_Init(&ctx);
+	if (!rc) {
 		return -1;
+	}
 
 	n = 0;
 
 	for (i = 0; i < image->n_checksum_regions; i++) {
 		region = &image->checksum_regions[i];
 		n += region->size;
-#if 0
+#if 1
 		printf("sum region: 0x%04lx -> 0x%04lx [0x%04x bytes]\n",
-				region->data - image->buf,
-				region->data - image->buf - 1 + region->size,
+				(unsigned char *)region->data - image->buf,
+				(unsigned char *)region->data - image->buf - 1 + region->size,
 				region->size);
 
 #endif
-		rc = SHA256_Update(&ctx, region->data, region->size);
+		rc = SHA384_Update(&ctx, region->data, region->size);
 		if (!rc)
 			return -1;
 	}
 
-	rc = SHA256_Final(digest, &ctx);
-
+	rc = SHA384_Final(digest, &ctx);
 	return !rc;
 }
 
