@@ -1,28 +1,39 @@
-sbsigntool - Signing utility for UEFI secure boot
+- Note: refer to README.orig for the build steps.
 
-  Copyright (C) 2102 Jeremy Kerr <jeremy.kerr@canonical.com>
+- First, generate a self-signed example certificate.
 
-  Copying and distribution of this file, with or without modification,
-  are permitted in any medium without royalty provided the copyright
-  notice and this notice are preserved.
+- Compute the PE authenticate hash
+  ```shell
+  ./src/sbsign --key sample.pem --cert sample.pem bzImage
+  ```
 
-See file ./INSTALL for building and installation instructions.
+  example output:
+  ```
+  sum region: 0x0000 -> 0x00d9 [0x00da bytes]
+  sum region: 0x00de -> 0x0129 [0x004c bytes]
+  sum region: 0x0132 -> 0x01ff [0x00ce bytes]
+  sum region: 0x0200 -> 0x39df [0x37e0 bytes]
+  sum region: 0x39e0 -> 0x39ff [0x0020 bytes]
+  sum region: 0x3a00 -> 0x61d71f [0x619d20 bytes]
+  sha384 digest: ae53ade456d0eaddb739e78914390bc6f33e368bc67a57dc8751aa863fbce1de6ef7ae951e1dc17d9d24db098763f77d
+  ```
 
-Original development was done at:
-  git://kernel.ubuntu.com/jk/sbsigntool.git
+- Compute the PE authenticate hash with patched bzImage
+  ```shell
+  ./src/sbsign --key sample.pem --cert sample.pem -Q bzImage
+  ```
 
-The current maintained fork resides at:
-
-  https://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git/
-
-And a very low volume mailing list for bugs and patches is setup at
-
- sbsigntools@groups.io
-
-Thanks to groups.io policies, non-members can post to this list, but
-non-member postings are moderated until released (so they won't show
-up immediately).  The list archives are available:
-
- https://groups.io/g/sbsigntools/topics
-
-sbsigntool is free software.  See the file COPYING for copying conditions.
+  example output:
+  ```
+  patching @0x210 (type_of_loader) to 0xb0 ...
+  patching @0x211 (loadflags) to 0x81 ...
+  patching @0x224 (heap_end_ptr) to 0xfe00 ...
+  patching @0x228 (cmd_line_ptr) to 0x20000
+  sum region: 0x0000 -> 0x00d9 [0x00da bytes]
+  sum region: 0x00de -> 0x0129 [0x004c bytes]
+  sum region: 0x0132 -> 0x01ff [0x00ce bytes]
+  sum region: 0x0200 -> 0x39df [0x37e0 bytes]
+  sum region: 0x39e0 -> 0x39ff [0x0020 bytes]
+  sum region: 0x3a00 -> 0x61d71f [0x619d20 bytes]
+  sha384 digest: 283471cdbd2b3ee19142938daa12edd9eda3ff8422f14ff4190c3f0140ca4ef1b4685bacda6d025b84f159d7f6ea2a88 
+  ```
