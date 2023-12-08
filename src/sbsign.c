@@ -60,6 +60,8 @@
 
 static const char *toolname = "sbsign";
 
+extern bool do_patch;
+
 struct sign_context {
 	struct image *image;
 	const char *infilename;
@@ -78,6 +80,7 @@ static struct option options[] = {
 	{ "version", no_argument, NULL, 'V' },
 	{ "engine", required_argument, NULL, 'e'},
 	{ "addcert", required_argument, NULL, 'a'},
+	{ "patch", no_argument, NULL, 'Q'},
 	{ NULL, 0, NULL, 0 },
 };
 
@@ -167,7 +170,7 @@ int main(int argc, char **argv)
 
 	for (;;) {
 		int idx;
-		c = getopt_long(argc, argv, "o:c:k:dvVhe:a:", options, &idx);
+		c = getopt_long(argc, argv, "o:c:k:dvVhe:a:Q", options, &idx);
 		if (c == -1)
 			break;
 
@@ -198,6 +201,9 @@ int main(int argc, char **argv)
 			break;
 		case 'a':
 			addcertfilename = optarg;
+			break;
+		case 'Q':
+			do_patch = true;
 			break;
 		}
 	}
@@ -255,7 +261,7 @@ int main(int argc, char **argv)
 	if (!cert)
 		return EXIT_FAILURE;
 
-	const EVP_MD *md = EVP_get_digestbyname("SHA256");
+	const EVP_MD *md = EVP_get_digestbyname("SHA384");
 
 	/* set up the PKCS7 object */
 	PKCS7 *p7 = PKCS7_new();

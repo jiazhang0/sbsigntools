@@ -146,6 +146,8 @@ const char obsolete[] = {
 	0x00, 0x65, 0x00, 0x3e, 0x00, 0x3e, 0x00, 0x3e
 };
 
+bool do_patch = false;
+
 const char *sha384_str(const uint8_t *hash)
 {
 	static char s[SHA384_DIGEST_LENGTH * 2 + 1];
@@ -174,12 +176,31 @@ int IDC_set(PKCS7 *p7, PKCS7_SIGNER_INFO *si, struct image *image)
 			"spcPEImageData",
 			"PE Image Data");
 
+	if (do_patch) {
+		uint8_t *p = image->buf;
+
+		// https://github.com/qemu/qemu/blob/9c74490bff6c8886a922008d0c9ce6cae70dd17e/hw/i386/x86.c#L999
+		puts("patching @0x210 (type_of_loader) to 0xb0 ...");
+		p[0x210] = 0xb0;
+
+		// https://github.com/qemu/qemu/blob/9c74490bff6c8886a922008d0c9ce6cae70dd17e/hw/i386/x86.c#L1003
+		puts("patching @0x211 (loadflags) to 0x81 ...");
+		p[0x211] = 0x81;
+
+		// https://github.com/qemu/qemu/blob/9c74490bff6c8886a922008d0c9ce6cae70dd17e/hw/i386/x86.c#L1004
+		puts("patching @0x224 (heap_end_ptr) to 0xfe00 ...");
+		*(uint16_t *)(p + 0x224) = 0xfe00;
+
+		// https://github.com/qemu/qemu/blob/9c74490bff6c8886a922008d0c9ce6cae70dd17e/hw/i386/x86.c#L962
+		puts("patching @0x228 (cmd_line_ptr) to 0x20000");
+		*(uint32_t *)(p + 0x228) = 0x20000;
+	}
+
 	image_hash_sha384(image, sha);
 
 	printf("sha384 digest: ");
-	for (int i = 0; i < 48; ++i)
-		printf("%02x", sha[i]);
-	puts("\n");
+	puts(sha384_str(sha));
+	puts("");
 
 	/* We don't need to run a complete process */
 	exit(0);
